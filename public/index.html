@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Gallery</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.9.2/dist/index.css" />
+  <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus@2.9.2/dist/index.full.js"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <style>
+    .main-wrap {
+      width: 800px;
+      min-height: 400px;
+      margin: 100px auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">  
+    <div class="main-wrap">
+      <el-form :model="form" label-width="auto" label-position="left" ref="formRef">
+        <el-form-item label="选择目录">
+          <el-select v-model="form.directory">
+            <el-option
+              v-for="(projectItem, index) in directoryList"
+              :key="projectItem.value"
+              :label="projectItem.label"
+              :value="projectItem.value"
+            ></el-option>
+            <template #footer>
+              <el-button v-if="!isAdding" text bg size="small" @click="onAddOption">
+                Add an option
+              </el-button>
+              <template v-else>
+                <el-input
+                  v-model="optionName"
+                  style="margin-bottom: 8px;"
+                  placeholder="input option name"
+                  size="small"
+                ></el-input>
+                <el-button type="primary" size="small" @click="onConfirmOption">
+                  confirm
+                </el-button>
+                <el-button size="small" @click="clearOption">cancel</el-button>
+              </template>
+            </template>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="是否保留文件名">
+          <el-radio-group v-model="form.isRetainName">
+            <el-radio :value="true">是</el-radio>
+            <el-radio :value="false">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="创建日期文件夹">
+          <el-switch v-model="form.isDateDir" />
+        </el-form-item>
+        <el-upload
+          ref="uploadRef"
+          drag
+          action="http://127.0.0.1:3030/upload"
+          multiple
+          :data="form"
+          :auto-upload="false"
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">
+            Drop file here or <em>click to upload</em>
+          </div>
+        </el-upload>
+        <el-form-item>
+          <el-button
+            type="primary"
+            plain
+            style="width: 100%;"
+            @click="submit"
+          >
+            上传
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+    const { createApp, ref, reactive } = Vue;
+    const { ElMessage } = ElementPlus;
+
+    const app = createApp({
+      setup() {
+        const axiosInstance = axios.create({
+          baseURL: 'http://127.0.0.1:3030',
+          timeout: 10000,
+        });
+
+        const formRef = ref();
+        const uploadRef = ref();
+
+        const form = reactive({
+          directory: '/',
+          isRetainName: false,
+          isDateDir: true,
+        });
+
+        const isAdding = ref(false);
+        const optionName = ref('');
+        const directoryList = ref([]);
+        const onAddOption = () => {
+          isAdding.value = true;
+        };
+        const onConfirmOption = () => {
+          if (optionName.value) {
+            directoryList.value.push({
+              label: optionName.value,
+              value: optionName.value,
+            });
+            clearOption();
+          }
+        };
+        const clearOption = () => {
+          optionName.value = '';
+          isAdding.value = false;
+        };
+
+        const getDirList = () => {
+          axiosInstance.get('/getDirList')
+            .then((res) => {
+              directoryList.value = res.data.list.map(item => ({
+                label: item,
+                value: item
+              }));
+            });
+        };
+        getDirList();
+
+        const submit = () => {
+          uploadRef.value.submit();
+        };
+
+        return {
+          formRef,
+          uploadRef,
+          form,
+          submit,
+          isAdding,
+          optionName,
+          directoryList,
+          onAddOption,
+          onConfirmOption,
+          clearOption,
+        }
+      }
+    });
+    app.use(ElementPlus);
+    for ([name, comp] of Object.entries(ElementPlusIconsVue)) {
+      app.component(name, comp);
+    }
+    app.mount('#app');
+  </script>
+</body>
+
+</html>
