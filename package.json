@@ -1,0 +1,30 @@
+{
+  "name": "image-gallery",
+  "version": "1.0.0",
+  "description": "picture storage",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hai-zou/image-gallery.git"
+  },
+  "keywords": [
+    "image"
+  ],
+  "author": "zouhai",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hai-zou/image-gallery/issues"
+  },
+  "homepage": "https://github.com/hai-zou/image-gallery#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^3.3.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
