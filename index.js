@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { nanoid } = require('nanoid');
+const { getDirectoryStructure } = require('./utils/tools');
 
 const app = express();
 
@@ -58,6 +59,16 @@ app.get('/getDirList', (req, res) => {
 
 app.post('/upload', upload.single('file'), (req, res) => {
   res.json({ path: path.basename(req.file.path) });
+});
+
+app.get("/getFileListByPath", async (req, res) => {
+  try {
+    const dir = path.join(imagesDir, req.query.path);
+    const list = await getDirectoryStructure(dir);
+    res.json({ list });
+  } catch (err) {
+    res.status(404).send({ error: err.message });
+  }
 });
 
 app.listen(3030, () => {

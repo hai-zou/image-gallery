@@ -14,7 +14,42 @@
     .main-wrap {
       width: 800px;
       min-height: 400px;
-      margin: 100px auto;
+      margin: 0 auto;
+    }
+    .tabs-wrapper .el-tabs__item {
+      height: 60px;
+    }
+    .breadcrumb-item.active {
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .upload-form {
+      margin-top: 20px;
+    }
+    .images-wrapper {
+      margin-top: 10px;
+    }
+    .image-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .image-list .image-item {
+      cursor: pointer;
+      width: 100%;
+      height: 200px;
+      border: 1px dashed gray;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-list .directory {
+      flex-direction: column;
+    }
+    .image-list .img img {
+      max-width: 100%;
+      height: 50%;
     }
   </style>
 </head>
@@ -22,67 +57,114 @@
 <body>
   <div id="app">  
     <div class="main-wrap">
-      <el-form :model="form" label-width="auto" label-position="left" ref="formRef">
-        <el-form-item label="选择目录">
-          <el-select v-model="form.directory">
-            <el-option
-              v-for="(projectItem, index) in directoryList"
-              :key="projectItem.value"
-              :label="projectItem.label"
-              :value="projectItem.value"
-            ></el-option>
-            <template #footer>
-              <el-button v-if="!isAdding" text bg size="small" @click="onAddOption">
-                Add an option
-              </el-button>
-              <template v-else>
-                <el-input
-                  v-model="optionName"
-                  style="margin-bottom: 8px;"
-                  placeholder="input option name"
-                  size="small"
-                ></el-input>
-                <el-button type="primary" size="small" @click="onConfirmOption">
-                  confirm
-                </el-button>
-                <el-button size="small" @click="clearOption">cancel</el-button>
-              </template>
-            </template>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="是否保留文件名">
-          <el-radio-group v-model="form.isRetainName">
-            <el-radio :value="true">是</el-radio>
-            <el-radio :value="false">否</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="创建日期文件夹">
-          <el-switch v-model="form.isDateDir" />
-        </el-form-item>
-        <el-upload
-          ref="uploadRef"
-          drag
-          action="http://127.0.0.1:3030/upload"
-          multiple
-          :data="form"
-          :auto-upload="false"
-        >
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">
-            Drop file here or <em>click to upload</em>
-          </div>
-        </el-upload>
-        <el-form-item>
-          <el-button
-            type="primary"
-            plain
-            style="width: 100%;"
-            @click="submit"
+      <el-tabs v-model="activeTab" class="tabs-wrapper" @tab-change="handleClickTab">
+        <el-tab-pane label="上传图片" name="Upload">
+          <el-form
+            :model="form"
+            label-width="auto"
+            label-position="left"
+            ref="formRef"
+            class="upload-form"
           >
-            上传
-          </el-button>
-        </el-form-item>
-      </el-form>
+            <el-form-item label="选择目录">
+              <el-select v-model="form.directory">
+                <el-option
+                  v-for="(projectItem, index) in directoryList"
+                  :key="projectItem.value"
+                  :label="projectItem.label"
+                  :value="projectItem.value"
+                ></el-option>
+                <template #footer>
+                  <el-button v-if="!isAdding" text bg size="small" @click="onAddOption">
+                    Add an option
+                  </el-button>
+                  <template v-else>
+                    <el-input
+                      v-model="optionName"
+                      style="margin-bottom: 8px;"
+                      placeholder="input option name"
+                      size="small"
+                    ></el-input>
+                    <el-button type="primary" size="small" @click="onConfirmOption">
+                      confirm
+                    </el-button>
+                    <el-button size="small" @click="clearOption">cancel</el-button>
+                  </template>
+                </template>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="是否保留文件名">
+              <el-radio-group v-model="form.isRetainName">
+                <el-radio :value="true">是</el-radio>
+                <el-radio :value="false">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="创建日期文件夹">
+              <el-switch v-model="form.isDateDir" />
+            </el-form-item>
+            <el-upload
+              ref="uploadRef"
+              drag
+              action="http://127.0.0.1:3030/upload"
+              multiple
+              :data="form"
+              :auto-upload="false"
+            >
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">
+                Drop file here or <em>click to upload</em>
+              </div>
+            </el-upload>
+            <el-form-item>
+              <el-button
+                type="primary"
+                plain
+                style="width: 100%;"
+                @click="submit"
+              >
+                上传
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="图库" name="Images">
+          <el-breadcrumb separator="/">
+            <template
+              v-for="(breadcrumbItem, index) in breadcrumbList"
+              :key="breadcrumbItem.value"
+            >
+              <el-breadcrumb-item
+                class="breadcrumb-item"
+                :class="{ 'active': index !== (breadcrumbList.length - 1) }"
+                @click="handleClickBread(index)"
+              >
+                {{ breadcrumbItem.label }}
+              </el-breadcrumb-item>
+            </template>
+          </el-breadcrumb>
+          <div class="images-wrapper">
+            <template v-if="imageList.length === 0">
+              <el-empty></el-empty>
+            </template>
+            <div class="image-list" v-else>
+              <template v-for="imageItem in imageList" :key="imageItem.name">
+                <div
+                  v-if="imageItem.type === 'directory'"
+                  class="image-item directory"
+                  @click="handleClickDir(imageItem.name)"
+                >
+                  <el-icon size="50"><Folder /></el-icon>
+                  {{ imageItem.name }}
+                </div>
+                <div v-if="imageItem.type === 'file'" class="image-item img">
+                  <img :src="getImageUrl(imageItem.name)" alt="">
+                </div>
+              </template>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="转 webp 格式" name="TransWebp">Role</el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 
@@ -97,6 +179,50 @@
           baseURL: 'http://127.0.0.1:3030',
           timeout: 10000,
         });
+
+        const activeTab = ref('Upload');
+
+        const breadcrumbList = ref([]);
+        const imageList = ref([]);
+
+        const getImageList = (path) => {
+          imageList.value = [];
+          return axiosInstance.get('/getFileListByPath', { params: { path } })
+            .then((res) => {
+              imageList.value = res.data.list;
+            });
+        };
+
+        const handleClickTab = (tabName) => {
+          if (tabName === 'Images') {
+            getImageList('/').then(() => {
+              breadcrumbList.value = [
+                { label: 'Home', value: '/' },
+              ];
+            });
+          }
+        };
+
+        const getDirStr = () => {
+          return breadcrumbList.value.map(item => item.value).join('/').substring(1);
+        }
+
+        const getImageUrl = (name) => {
+          const dir = getDirStr();
+          return `${dir}/${name}`;
+        };
+
+        const handleClickBread = (index) => {
+          breadcrumbList.value.splice(index + 1);
+          const dir = getDirStr();
+          getImageList(dir);
+        };
+
+        const handleClickDir = (dirName) => {
+          breadcrumbList.value.push({ label: dirName, value: dirName });
+          const dir = getDirStr();
+          getImageList(dir);
+        };
 
         const formRef = ref();
         const uploadRef = ref();
@@ -143,6 +269,13 @@
         };
 
         return {
+          activeTab,
+          breadcrumbList,
+          imageList,
+          handleClickTab,
+          handleClickBread,
+          handleClickDir,
+          getImageUrl,
           formRef,
           uploadRef,
           form,
