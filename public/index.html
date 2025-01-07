@@ -105,7 +105,7 @@
             <el-upload
               ref="uploadRef"
               drag
-              action="http://127.0.0.1:3030/upload"
+              action="/upload"
               multiple
               :data="form"
               :auto-upload="false"
@@ -176,7 +176,6 @@
     const app = createApp({
       setup() {
         const axiosInstance = axios.create({
-          baseURL: 'http://127.0.0.1:3030',
           timeout: 10000,
         });
 
