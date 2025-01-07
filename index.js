@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 
 const imagesDir = path.join(__dirname, 'images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
 
 app.use(express.static(imagesDir));
 app.use(express.static(path.join(__dirname, 'public')));
