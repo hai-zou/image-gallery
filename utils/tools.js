@@ -5,6 +5,7 @@ async function getDirectoryStructure(dirPath) {
   try {
     const files = await fs.promises.readdir(dirPath, { withFileTypes: true });
     const result = [];
+
     for (const file of files) {
       if (file.isDirectory()) {
         result.push({
@@ -18,6 +19,14 @@ async function getDirectoryStructure(dirPath) {
         });
       }
     }
+
+    result.sort((a, b) => {
+      // 目录排在前面，文件排在后面
+      if (a.type === 'directory' && b.type !== 'directory') return -1;
+      if (a.type !== 'directory' && b.type === 'directory') return 1;
+      // 如果都是文件或目录，按名字排序
+      return a.name.localeCompare(b.name);  
+    });
 
     return result;
   } catch (err) {
