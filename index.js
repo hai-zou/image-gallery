@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { nanoid } = require('nanoid');
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  * @param {Sting} directory 目录名
  * @param {Boolean} isRetainName 是否保留文件名
  * @param {Boolean} isDateDir 是否创建日期文件夹
+ * @param {Boolean} transWebp 是否转换为Webp格式
  */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,9 +50,20 @@ const storage = multer.diskStorage({
       fileName = `${nanoid(10)}${path.extname(file.originalname)}`;
     }
     cb(null, fileName);
-  }
+  },
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /jpeg|jpg|png|webp|gif/;
+    const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    if (extName) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images are allowed'));
+    }
+  },
+});
 
 app.get('/getDirList', (req, res) => {
   const list = fs.readdirSync(imagesDir, { withFileTypes: true })
@@ -60,8 +73,37 @@ app.get('/getDirList', (req, res) => {
   res.json({ list });
 });
 
-app.post('/upload', upload.single('file'), (req, res) => {
-  res.json({ path: path.basename(req.file.path) });
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    const { transWebp } = req.body;
+    if (transWebp === 'true') {
+      const originalFilePath = req.file.path;
+      // 获取文件扩展名
+      const fileExt = path.extname(originalFilePath).toLowerCase();
+      const webpFileName = `${path.basename(req.file.filename, fileExt)}.webp`;
+      const webpFilePath = path.join(path.dirname(originalFilePath), webpFileName);
+
+      // 检查文件格式，如果是 WebP 格式则不用转换
+      if (fileExt=== '.webp') {
+        return res.json({ path: originalFilePath });
+      }
+
+      // 转换为 WebP 格式
+      await sharp(originalFilePath)
+        .rotate() // 自动根据 EXIF 元数据调整方向
+        .webp({ quality: 80 }) // 设置 WebP 的质量
+        .toFile(webpFilePath);
+
+      // 删除原始文件（可选）
+      fs.unlinkSync(originalFilePath);
+
+      res.json({ path: webpFilePath });
+    } else {
+      res.json({ path: path.basename(req.file.path) });
+    }
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
 });
 
 app.get("/getFileListByPath", async (req, res) => {
@@ -70,7 +112,7 @@ app.get("/getFileListByPath", async (req, res) => {
     const list = await getDirectoryStructure(dir);
     res.json({ list });
   } catch (err) {
-    res.status(404).send({ error: err.message });
+    res.status(500).send({ error: err.message });
   }
 });
 

@@ -93,20 +93,30 @@
                 </template>
               </el-select>
             </el-form-item>
-            <el-form-item label="是否保留文件名">
+            <el-form-item label="保留文件名">
               <el-radio-group v-model="form.isRetainName">
                 <el-radio :value="true">是</el-radio>
                 <el-radio :value="false">否</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="创建日期文件夹">
-              <el-switch v-model="form.isDateDir" />
+              <el-radio-group v-model="form.isDateDir">
+                <el-radio :value="true">是</el-radio>
+                <el-radio :value="false">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="转换为 webp">
+              <el-radio-group v-model="form.transWebp">
+                <el-radio :value="true">是</el-radio>
+                <el-radio :value="false">否</el-radio>
+              </el-radio-group>
             </el-form-item>
             <el-upload
               ref="uploadRef"
               drag
               action="/upload"
               multiple
+              accept=".jpeg,.jpg,.png,.webp,.gif"
               :data="form"
               :auto-upload="false"
             >
@@ -163,7 +173,6 @@
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="转 webp 格式" name="TransWebp">Role</el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -230,6 +239,7 @@
           directory: '/',
           isRetainName: false,
           isDateDir: true,
+          transWebp: false,
         });
 
         const isAdding = ref(false);
